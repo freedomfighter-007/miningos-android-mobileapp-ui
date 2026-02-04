@@ -6,7 +6,7 @@
 2. [Architecture](#architecture)
 3. [Feature Flags](#feature-flags)
 4. [Feature Configs](#feature-configs)
-5. [Mempool Data Integration via API](mempool-data-integration-via-api)
+5. [Mempool Data Integration via API](#mempool-data-integration-via-api)
 6. [Development Setup](#development-setup)
 7. [Sentry Error Tracking](#sentry-error-tracking)
 8. [Logger Service](#logger-service)
@@ -14,7 +14,7 @@
 10. [Code Quality](#code-quality)
 11. [Architecture Documentation](#architecture-documentation)
 12. [Project Structure](#project-structure)
-13. [Key Technologies](key-technologies)
+13. [Key Technologies](#key-technologies)
 14. [Environment Variables](#environment-variables)
 
 ## Overview

@@ -32,7 +32,18 @@ export const HISTORICAL_LOG_TYPES = {
 
 export type HistoricalLogType = (typeof HISTORICAL_LOG_TYPES)[keyof typeof HISTORICAL_LOG_TYPES]
 
+/**
+ * Extracts feature flags from URL parameters.
+ * Only enabled in development/staging environments for security.
+ * In production, URL-based feature flags are disabled to prevent
+ * unauthorized feature access.
+ */
 export const getFeaturesFromUrlParams = (params: string): FeatureFlags => {
+  // Disable URL-based feature flags in production for security
+  if (import.meta.env.PROD && !import.meta.env.VITE_ALLOW_URL_FEATURES) {
+    return {}
+  }
+
   const queryParams = new URLSearchParams(params)
   const features = queryParams.get(FEATURES_GET_API_ENDPOINT)
   return _reduce(

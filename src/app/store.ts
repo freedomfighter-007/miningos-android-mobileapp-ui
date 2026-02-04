@@ -11,6 +11,8 @@ import { combineReducers } from 'redux'
 import { persistReducer, persistStore, type Persistor } from 'redux-persist'
 import storage from 'redux-persist/lib/storage'
 
+import { secureStorage } from './utils/secureStorage'
+
 import type { RootState } from '../types/redux'
 import { ERROR_CODES } from '../Views/SignIn/SignIn.const'
 
@@ -35,10 +37,34 @@ export const { setDarkTheme, setLightTheme, setIsAlertEnabled } = themeSlice.act
 
 export const { setTimezone } = timezoneSlice.actions
 
+/**
+ * Persist configuration for sensitive auth data.
+ * Uses sessionStorage via secureStorage for improved security:
+ * - Tokens cleared on browser close
+ * - Isolated per tab
+ * - Reduced exposure window
+ */
+const authPersistConfig = {
+  key: 'miningos-auth',
+  storage: secureStorage,
+  whitelist: ['token', 'permissions'],
+}
+
+/**
+ * Persist configuration for non-sensitive app data.
+ * Uses localStorage for persistence across sessions.
+ */
+const appPersistConfig = {
+  key: 'miningos',
+  storage,
+  whitelist: ['theme', 'devices', 'timezone', 'multiSite', 'sidebar', 'userInfo'],
+  blacklist: ['auth'], // Auth is handled separately with secureStorage
+}
+
 const reducers = combineReducers({
   theme: themeSlice.reducer,
   timezone: timezoneSlice.reducer,
-  auth: authSlice.reducer,
+  auth: persistReducer(authPersistConfig, authSlice.reducer),
   [api.reducerPath]: api.reducer,
   devices: devicesSlice.reducer,
   actions: actionsSlice.reducer,
@@ -51,13 +77,7 @@ const reducers = combineReducers({
   userInfo: userInfoSlice.reducer,
 })
 
-const persistConfig = {
-  key: 'miningos',
-  storage,
-  whitelist: ['auth', 'theme', 'devices', 'timezone', 'multiSite', 'sidebar', 'userInfo'],
-}
-
-const persistedReducer = persistReducer(persistConfig, reducers)
+const persistedReducer = persistReducer(appPersistConfig, reducers)
 
 const rtkQueryErrorHandler: Middleware = (api: MiddlewareAPI) => (next) => (action: unknown) => {
   if (isRejectedWithValue(action)) {
@@ -106,10 +126,10 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: ['persist/PERSIST'],
+        ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
       },
     }).concat([api.middleware, rtkQueryErrorHandler]),
-  devTools: true,
+  devTools: import.meta.env.DEV,
 })
 
 setupListeners(store.dispatch)

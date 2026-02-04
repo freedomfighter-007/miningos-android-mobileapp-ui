@@ -21,6 +21,20 @@ import {
   TOOLTIP_DEFAULT_OFFSET,
 } from './LineChart.constants'
 
+/**
+ * Escapes HTML special characters to prevent XSS attacks
+ * when inserting dynamic content into innerHTML
+ */
+const escapeHtml = (unsafe: string | number): string => {
+  const str = String(unsafe)
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
 export type LineDataPoint = { x: number; y: number | null | undefined }
 export type ExtraTooltipData = Record<number, string>
 
@@ -157,6 +171,10 @@ export const buildTooltipHTML = ({
     const formattedValue = yTicksFormatter ? yTicksFormatter(value) : value
     const valueWithUnit = unit ? `${formattedValue} ${unit}` : formattedValue
 
+    const safeLabel = escapeHtml(label || customLabel || '')
+    const safeBorderColor = escapeHtml(borderColor)
+    const safeValueWithUnit = escapeHtml(valueWithUnit)
+
     tooltipHTML += `
       <div style="
         display: flex;
@@ -171,13 +189,13 @@ export const buildTooltipHTML = ({
             ? `<span>${format(new Date(timestamp * 1000), 'MM-dd-yyyy')}</span>`
             : ''
         }
-        <span style="margin-right: 8px;">${label || customLabel || ''}</span>
-        <span style="color: ${borderColor}">${valueWithUnit}</span>
+        <span style="margin-right: 8px;">${safeLabel}</span>
+        <span style="color: ${safeBorderColor}">${safeValueWithUnit}</span>
       </div>
     `
 
     if (!extraTooltipHTML && timestamp && extraTooltipData?.[timestamp]) {
-      extraTooltipHTML = extraTooltipData[timestamp]
+      extraTooltipHTML = escapeHtml(extraTooltipData[timestamp])
     }
   }
 
